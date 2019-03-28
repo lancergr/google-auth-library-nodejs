@@ -219,3 +219,24 @@ it('should accept a custom service account', async () => {
   scopes.forEach(s => s.done());
   assert.strictEqual(compute.credentials.access_token, 'abc123');
 });
+
+it('should accept scopes', async () => {
+  const compute = new Compute({
+    scopes: [
+      'https://www.googleapis.com/auth/dfatrafficking',
+      'https://www.googleapis.com/auth/dfareporting'
+    ]
+  });
+  const scopes = [
+    mockExample(),
+    nock(HOST_ADDRESS)
+        .get(tokenPath)
+        .query({
+          scopes: 'https://www.googleapis.com/auth/dfatrafficking,https://www.googleapis.com/auth/dfareporting'
+        })
+        .reply(200, {access_token: 'abc123', expires_in: 10000}, HEADERS)
+  ];
+  await compute.request({url});
+  scopes.forEach(s => s.done());
+  assert.strictEqual(compute.credentials.access_token, 'abc123');
+});

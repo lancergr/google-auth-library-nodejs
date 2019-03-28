@@ -26,10 +26,16 @@ export interface ComputeOptions extends RefreshOptions {
    * may have multiple service accounts.
    */
   serviceAccountEmail?: string;
+
+  /**
+   * API scopes to use.
+   */
+  scopes?: string[];
 }
 
 export class Compute extends OAuth2Client {
   private serviceAccountEmail: string;
+  private scopes?: string[];
 
   /**
    * Google Compute Engine service account credentials.
@@ -43,6 +49,7 @@ export class Compute extends OAuth2Client {
     // refreshed before the first API call is made.
     this.credentials = {expiry_date: 1, refresh_token: 'compute-placeholder'};
     this.serviceAccountEmail = options.serviceAccountEmail || 'default';
+    this.scopes = options.scopes;
   }
 
   /**
@@ -65,7 +72,10 @@ export class Compute extends OAuth2Client {
    */
   protected async refreshTokenNoCache(refreshToken?: string|
                                       null): Promise<GetTokenResponse> {
-    const tokenPath = `service-accounts/${this.serviceAccountEmail}/token`;
+    let tokenPath = `service-accounts/${this.serviceAccountEmail}/token`;
+    if (this.scopes instanceof Array && this.scopes.length > 0) {
+      tokenPath = tokenPath + '?scopes=' + this.scopes.join(',');
+    }
     let data: CredentialRequest;
     try {
       data = await gcpMetadata.instance(tokenPath);
